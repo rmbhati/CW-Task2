@@ -1,5 +1,6 @@
 package com.kgk.task2.ui;
 
+import android.content.Context;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Environment;
@@ -12,6 +13,8 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+
+import androidx.core.content.ContextCompat;
 
 import com.downloader.Error;
 import com.downloader.OnDownloadListener;
@@ -41,7 +44,10 @@ public class MainActivity extends BaseActivity {
     @Override
     public void initView() {
         setContentView(R.layout.activity_main);
-        dirPath = getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath();
+
+        dirPath = getRootDirPath(getApplicationContext());
+        //dirPath = getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath();
+
         Log.e("path", dirPath.toString());
         buttonOne = findViewById(R.id.buttonOne);
         buttonCancel = findViewById(R.id.buttonCancelOne);
@@ -68,7 +74,7 @@ public class MainActivity extends BaseActivity {
 
             String URL = "https://speed.hetzner.de/100MB.bin";
 
-            downloadId = PRDownloader.download(URL, dirPath, "Task1.bin")
+            downloadId = PRDownloader.download(URL, dirPath, "Task2.bin")
                     .build()
                     .setOnStartOrResumeListener(() -> {
                         progressBar.setIndeterminate(false);
@@ -97,9 +103,12 @@ public class MainActivity extends BaseActivity {
                             buttonOne.setEnabled(false);
                             buttonCancel.setEnabled(false);
                             buttonOne.setText("Complete");
-
                             try {
-                                Log.e("SHA", hashFile(new File(dirPath + "Task1.bin")));
+                                if (hashFile(new File(dirPath + "/Task2.bin")).equals("20492a4d0d84f8beb1767f6616229f85d44c2827b64bdbfb260ee12fa1109e0e")) {
+                                    Toast.makeText(MainActivity.this, "SHA256 Matched: " + hashFile(new File(dirPath + "/Task2.bin")), Toast.LENGTH_SHORT).show();
+                                } else {
+                                    Toast.makeText(MainActivity.this, "SHA256 Not Matched: " + hashFile(new File(dirPath + "/Task2.bin")), Toast.LENGTH_SHORT).show();
+                                }
                             } catch (IOException | NoSuchAlgorithmException e) {
                                 Log.e("SHA", e.toString());
                                 e.printStackTrace();
@@ -120,12 +129,7 @@ public class MainActivity extends BaseActivity {
                     });
         });
 
-        buttonCancel.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                PRDownloader.cancel(downloadId);
-            }
-        });
+        buttonCancel.setOnClickListener(view -> PRDownloader.cancel(downloadId));
     }
 
     private String hashFile(File file) throws NoSuchAlgorithmException, IOException {
@@ -145,6 +149,15 @@ public class MainActivity extends BaseActivity {
             sb.append(Integer.toString((mdbyte & 0xff) + 0x100, 16).substring(1));
         }
         return sb.toString();
+    }
+
+    public static String getRootDirPath(Context context) {
+        if (Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())) {
+            File file = ContextCompat.getExternalFilesDirs(context.getApplicationContext(), null)[0];
+            return file.getAbsolutePath();
+        } else {
+            return context.getApplicationContext().getFilesDir().getAbsolutePath();
+        }
     }
 
     private String getProgressDisplayLine(long currentBytes, long totalBytes) {
