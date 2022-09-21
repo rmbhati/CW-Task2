@@ -1,7 +1,11 @@
 package com.kgk.task2.ui;
 
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Environment;
+import android.os.ParcelFileDescriptor;
+import android.provider.MediaStore;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ProgressBar;
@@ -16,11 +20,19 @@ import com.downloader.Status;
 import com.kgk.task2.R;
 import com.kgk.task2.base.BaseActivity;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileDescriptor;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Locale;
 
 public class MainActivity extends BaseActivity {
     private String dirPath;
-    private Integer downloadId=0;
+    private Integer downloadId = 0;
 
     private Button buttonOne, buttonCancel;
     private ProgressBar progressBar;
@@ -30,7 +42,7 @@ public class MainActivity extends BaseActivity {
     public void initView() {
         setContentView(R.layout.activity_main);
         dirPath = getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath();
-
+        Log.e("path", dirPath.toString());
         buttonOne = findViewById(R.id.buttonOne);
         buttonCancel = findViewById(R.id.buttonCancelOne);
         progressBar = findViewById(R.id.progressBarOne);
@@ -85,6 +97,13 @@ public class MainActivity extends BaseActivity {
                             buttonOne.setEnabled(false);
                             buttonCancel.setEnabled(false);
                             buttonOne.setText("Complete");
+
+                            try {
+                                Log.e("SHA", hashFile(new File(dirPath + "Task1.bin")));
+                            } catch (IOException | NoSuchAlgorithmException e) {
+                                Log.e("SHA", e.toString());
+                                e.printStackTrace();
+                            }
                         }
 
                         @Override
@@ -109,12 +128,30 @@ public class MainActivity extends BaseActivity {
         });
     }
 
+    private String hashFile(File file) throws NoSuchAlgorithmException, IOException {
+        MessageDigest md = MessageDigest.getInstance("SHA-256");
+        FileInputStream fis = new FileInputStream(file);
+        byte[] dataBytes = new byte[1024];
 
-    public static String getProgressDisplayLine(long currentBytes, long totalBytes) {
+        int nread = 0;
+        while ((nread = fis.read(dataBytes)) != -1) {
+            md.update(dataBytes, 0, nread);
+        }
+
+        byte[] mdbytes = md.digest();
+
+        StringBuilder sb = new StringBuilder();
+        for (byte mdbyte : mdbytes) {
+            sb.append(Integer.toString((mdbyte & 0xff) + 0x100, 16).substring(1));
+        }
+        return sb.toString();
+    }
+
+    private String getProgressDisplayLine(long currentBytes, long totalBytes) {
         return getBytesToMBString(currentBytes) + "/" + getBytesToMBString(totalBytes);
     }
 
-    private static String getBytesToMBString(long bytes) {
+    private String getBytesToMBString(long bytes) {
         return String.format(Locale.ENGLISH, "%.2fMb", bytes / (1024.00 * 1024.00));
     }
 }
