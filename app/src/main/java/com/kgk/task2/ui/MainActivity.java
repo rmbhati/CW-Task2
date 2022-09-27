@@ -117,14 +117,23 @@ public class MainActivity extends BaseActivity {
 
                         @Override
                         public void onError(Error error) {
-                            buttonOne.setText("Start");
+                            if(error.isConnectionError()){
+                                Toast.makeText(MainActivity.this, "isConnectionError", Toast.LENGTH_SHORT).show();
+                            }else  if(error.isServerError()){
+                                Toast.makeText(MainActivity.this, "isServerError", Toast.LENGTH_SHORT).show();
+                            }
+                            buttonOne.setText("Resume");
+                            progressBar.setIndeterminate(false);
+                            buttonOne.setEnabled(true);
+
+                            /*buttonOne.setText("Start");
                             Toast.makeText(getApplicationContext(), "Error Occurred " + "1", Toast.LENGTH_SHORT).show();
                             textViewProgress.setText("");
                             progressBar.setProgress(0);
                             downloadId = 0;
                             buttonCancel.setEnabled(false);
                             progressBar.setIndeterminate(false);
-                            buttonOne.setEnabled(true);
+                            buttonOne.setEnabled(true);*/
                         }
                     });
         });
